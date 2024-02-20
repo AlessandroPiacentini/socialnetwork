@@ -1,111 +1,108 @@
-    <?php
-    session_start();
-    include "db_connection.php";
-    ?>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>HomePage</title>
-        <script>
-            function open_details(id){
-                window.location.href = "pagine_utente.php?id="+id;
-            }
-        </script>
-         <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-
-        h3, h4 {
-            color: #333;
-        }
-
-        a {
-            text-decoration: none;
-            color: #007bff;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        form {
-            margin-bottom: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
+<?php
+session_start();
+include "db_connection.php";
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomePage</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        .table-container {
             margin-top: 20px;
         }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
     </style>
-    </head>
-    <body>
-        
-        <?php
-        $db = Database::getInstance();
-        if(isset($_SESSION["username"]) and $_SESSION["username"]!=""){
-            echo "Benvenuto ".$_SESSION["username"];
-            echo "<a href='your_profile.php'><h3>Your Profile</h3></a>";
-            echo "<a href='check.php?msg=logout'><h4>logout</h4></a>";
+    <script>
+        function pulisci_textbox(){
+            document.getElementById("search").value = "";
         }
-        else{
-            echo "<a href='login.php'><h3>iscriviti</h3></a>";
+        function open_details(id){
+            window.location.href = "pagine_utente.php?id="+id;
         }
+    </script>
+</head>
+<body class="container">
+    <?php
+    $db = Database::getInstance();
+    if(isset($_SESSION["username"]) and $_SESSION["username"]!=""){
+        echo "<p>Welcome, ".$_SESSION["username"]."</p>";
+        echo "<a href='your_profile.php'><h3>Your Profile</h3></a>";
+        echo "<a href='check.php?msg=logout'><h4>Logout</h4></a>";
+    }
+    else{
+        echo "<a href='login.php'><h3>Sign Up</h3></a>";
+    }
+    ?>
 
-           
-        ?>
-        
+    <h3>Search</h3>
+    <form action="index.php" method="post" class="mb-3">
+        <div class="form-row align-items-center">
+            <div class="col-auto">
+                <?php
+                if(isset($_POST['search']) and $_POST['search']!=""){
+                    echo "<input type='text' name='search' id='search' class='form-control' placeholder='Search' value='".$_POST['search']."'>";
+                }
+                else{
+                    echo "<input type='text' name='search' id='search' class='form-control' placeholder='Search'>";
+                }
+                ?>
+            </div>
+            <div class="col-auto">
+                <button onclick="pulisci_textbox();" class="btn btn-secondary">X</button>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </div>
+    </form>
 
-        <h3>Cerca</h3>
-        <form action="index.php" method="post">
-            <input type="text" name="search" placeholder="Cerca">
-            <button type="submit">Cerca</button>
-        </form>
-        
-        
-        <table >
-            <thead><tr><td>username</td><td>descrizione</td></tr></thead>
+    <div class="table-container">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Username</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
             <tbody>
-        
-        <?php
-        if(isset($_POST['search']) and $_POST['search']!=""){
-            $where = array(
-                "user" => $_POST['search']
-            );
-            $result=$db->read_table("users", $where);
+                <?php
+                if(isset($_POST['search']) and $_POST['search']!=""){
+                    $where = array(
+                        "user" => $_POST['search']
+                    );
+                    $result = $db->read_table("users", $where);
+                }
+                else{
+                    $result = $db->read_table("users");
+                }
 
-        }
-        else{
-            $result=$db->read_table("users");
-        }
-
-        $s="";
-        while($row = $result->fetch_assoc()) {
-            if(isset($_SESSION["username"]) and $_SESSION["username"]==$row["user"]){
-                continue;
-            }
-            $s.="<tr><td onclick='open_details(".$row['id'].")'>".$row["user"]."</td><td onclick='open_details(".$row['id'].")'>".$row["descrizione"]."</td></tr>"; 
-        }
-
-        echo $s;
-        ?>
-        </tbody>
+                while($row = $result->fetch_assoc()) {
+                    if(isset($_SESSION["username"]) and $_SESSION["username"]==$row["user"]){
+                        continue;
+                    }
+                    echo "<tr onclick='open_details(".$row['id'].")'>";
+                    
+                    if(!($row["foto_profilo"]=="" or $row["foto_profilo"]==null)){
+                        echo"<td><img  width='50' height='50' src='foto/".$row['foto_profilo']."' ></td>";}
+                    else{
+                        echo"<td><img width='50' height='50' src='foto/default.jpg' ></td>";
+                        }
+                    echo "<td>".$row["user"]."</td>";
+                    echo "<td>".$row["descrizione"]."</td>";
+                    echo "</tr>";
+                }
+                ?>
+                
+            </tbody>
         </table>
-    </body>
-    
-    </html>
+    </div>
+
+    <!-- Include Bootstrap JS and Popper.js -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

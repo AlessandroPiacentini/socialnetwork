@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,14 +13,43 @@
 <body class="container">
     <?php
     include "db_connection.php";
+
+    if(isset($_GET["username"])) {
+        $username = $_GET["username"];
+        $db = Database::getInstance();
+        $where = array(
+            "user" => $username
+        );
+        $result = $db->read_table("users", $where, "s");
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $id=$row["id"];
+        }
+
+        
+    }
+    else{
+        if(!isset($_GET["id"])) {
+            header("Location: index.php");
+        }
+        else
+            $id = $_GET["id"];
+        
+
+    }
     $db = Database::getInstance();
-    $id = $_GET["id"];
     $where = array(
         "id" => $id
     );
     $result = $db->read_table("users", $where, "i");
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
+        if(!($row["foto_profilo"]=="" or $row["foto_profilo"]==null)){
+            echo"<img  width='200' height='200' src='foto/".$row['foto_profilo']."' >";}
+        else{
+            echo"<img width='200' height='200' src='foto/default.jpg' >";
+        }
+
         echo "<h3 class='mt-3'>".$row["user"]."</h3>";
         echo "<h4 class='mt-3'>".$row["descrizione"]."</h4>";
     }
@@ -35,6 +67,29 @@
         }
         echo "</div>";
     }
+    $where = array(
+        "id_followed" => $id
+    );
+    $result = $db->read_table("follow", $where, "i");
+    $n_followers = $result->num_rows;
+    echo "<h4 class='mt-3'>Followers: ".$n_followers."</h4>";
+
+    if(isset($_SESSION["id"])&&$_SESSION["id"]!=""){
+        
+        $where = array(
+            "id_follower" => $_SESSION["id"],
+            "id_followed" => $id
+        );
+        $result = $db->read_table("follow", $where, "ii");
+        if ($result->num_rows > 0) {
+            echo "<a href='follow.php?id=".$id."&action=0' class='btn btn-secondary mt-3'>Smetti di seguire</a>";
+        }
+        else{
+            echo "<a href='follow.php?id=".$id."&action=1' class='btn btn-secondary mt-3'>Segui</a>";
+        }
+        
+    }
+    
     ?>
     <a href='index.php' class='btn btn-secondary mt-3'>Home</a>
 

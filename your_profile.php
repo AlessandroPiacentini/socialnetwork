@@ -10,6 +10,9 @@ $db = Database::getInstance();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Aggiungere qui eventuali regole CSS personalizzate */
+    </style>
 </head>
 <body class="container">
     <?php
@@ -22,28 +25,21 @@ $db = Database::getInstance();
         }
         $id=$_SESSION["id"];
         
-        $where = array(
-            "id_user" => $id
-        );
-        $result=$db->read_table("foto", $where);
-        if($result->num_rows > 0){
-            echo "<div class='row'>";
-            while($row = $result->fetch_assoc()) {
-                echo "<div class='col-md-3 mb-3'>";
-                echo "<img src='foto/".$row["path"]."' class='img-fluid'>";
-                echo "<a href='elimina_foto.php?idfoto=".$row['id']."' class='btn btn-secondary mt-3'>elimina</a>";
-                echo "</div>";
-            }
-            echo "</div>";
-        }
+        
         if(isset($_GET['msg']) && $_GET['msg']=="success"){
             echo "<p class='alert alert-success'>Modifica avvenuta con successo</p>";
         } else if(isset($_GET['msg']) && $_GET['msg']=="error"){
             echo "<p class='alert alert-danger'>Errore</p>";
         }
+        $where = array(
+            "id_followed" => $id
+        );
+        $result = $db->read_table("follow", $where, "i");
+        $n_followers = $result->num_rows;
+        echo "<h4 class='mt-3'>Followers: ".$n_followers."</h4>";
         ?>
         
-        <h3 class="mt-3">Descrizione</h3>
+        
         <?php 
         if(isset($_SESSION["id"])){
             $where = array(
@@ -52,22 +48,35 @@ $db = Database::getInstance();
         
             $result= $db->read_table("users" , $where, "i");
             $row = $result->fetch_assoc();
-            echo "<p>".$row["descrizione"]."</p>";
+
+
+            if(!($row["foto_profilo"]=="" or $row["foto_profilo"]==null)){
+                echo"<img  width='200' height='200' src='foto/".$row['foto_profilo']."' >";}
+            else{
+                echo"<img width='200' height='200' src='foto/default.jpg' >";
+            }
+            echo "<h3 class='mt-3'>Descrizione</h3>";
+            echo "<h4>".$row["descrizione"]."</h4>";
+        }
+
+        echo "<h3 class='mt-3'>Foto</h3>";
+        $where = array(
+            "id_user" => $id
+        );
+        $result=$db->read_table("foto", $where);
+        if($result->num_rows > 0){
+            echo "<div class='row'>";
+            while($row = $result->fetch_assoc()) {
+                echo "<div class='col-md-3 col-sm-6'>";
+                echo "<img src='foto/".$row["path"]."' class='img-fluid'>";
+                echo "<a href='elimina_foto.php?idfoto=".$row['id']."' class='btn btn-secondary mt-3'>elimina</a>";
+                echo "</div>";
+            }
+            echo "</div>";
         }
         ?> 
-        <h3 class="mt-3">Modifica Profilo</h3>
-        <form action="modifica_profilo.php" method="post">
-            <div class="form-group">
-                <input type="text" name="username" class="form-control" placeholder="Username">
-            </div>
-            <div class="form-group">
-                <input type="password" name="password" class="form-control" placeholder="Password">
-            </div>
-            <div class="form-group">
-                <input type="text" name="descrizione" class="form-control" placeholder="Descrizione">
-            </div>
-            <button type="submit" class="btn btn-primary">Modifica</button>
-        </form>
+        
+        <a href="personalizza_profilo.php" class="btn btn-success mt-3">Modifica Profilo</a>
         <a href="add_foto.php" class="btn btn-success mt-3">Aggiungi Foto</a>
         <a href="index.php" class="btn btn-secondary mt-3">Home</a>
         <a href="check.php?msg=logout" class="btn btn-danger mt-3">Logout</a>
